@@ -1,13 +1,13 @@
-package link
+package plugin
 
 import (
-	_ "github.com/go-sql-driver/mysql"
-	"log"
 	"fmt"
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/xorm"
-	"github.com/go-xorm/core"
 	"hatgo/pkg/logs"
-	"hatgo/pkg/conf"
+	"hatgo/pkg/s"
+	"log"
+	"xorm.io/core"
 )
 
 const mysqlLogIH = "[xorm] [info]"
@@ -24,7 +24,7 @@ func db() {
 		dbType, dbName, user, pass, host, tablePrefix string
 	)
 
-	sec, err := conf.Cfg.GetSection("database")
+	sec, err := s.Cfg.GetSection("database")
 	if err != nil {
 		log.Fatal(2, "Fail to get section 'database':%v", err)
 	}
@@ -45,16 +45,17 @@ func db() {
 		log.Printf("%v\n", err)
 	}
 
+	log.Printf("%s host:%s user:%s pass:%s db:%s\n", mysqlLogIH, host, user, pass, dbName)
 	err = Db.Ping()
 	if err != nil {
-		fmt.Printf("%s %v\n", mysqlLogIH, err)
+		log.Printf("%s %v\n", mysqlLogIH, err)
 	} else {
 		log.Printf("%s %s\n", mysqlLogIH, "mysql's connecting is ok")
 	}
 	//设置表前缀
 	tbMapper := core.NewPrefixMapper(core.SnakeMapper{}, tablePrefix)
 	Db.SetTableMapper(tbMapper)
-	logger := xorm.NewSimpleLogger(logs.LogsSql)
+	//日志记录到对应文档
+	Db.SetLogger(xorm.NewSimpleLogger(logs.LogsSql))
 	Db.ShowSQL(true)
-	Db.SetLogger(logger)
 }

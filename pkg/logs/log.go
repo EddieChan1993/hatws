@@ -2,28 +2,27 @@ package logs
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/astaxie/beego/logs"
+	"github.com/gin-gonic/gin"
+	"hatgo/pkg/s"
 	"os"
 	"runtime"
-	"fmt"
-	"github.com/astaxie/beego/validation"
-	"hatgo/pkg/conf"
-	"github.com/gin-gonic/gin"
 )
 
 //单个日志文件存储，默认256M
 type LogConfT struct {
 	Filename string
+	MaxSize  int64
 	Maxdays  int
 	Level    int
 }
 
 var (
-	filePath, filePathSql, filePathWs, filePathErr string
-	LogsReq                                        *logs.BeeLogger //请求日志
-	LogsSql                                        *logs.BeeLogger //sql日志
-	LogsWs                                         *logs.BeeLogger //socket日志
-	logsErr                                        *logs.BeeLogger //err日志
+	filePath, filePathSql, filePathErr string
+	LogsReq                            *logs.BeeLogger //请求日志
+	LogsSql                            *logs.BeeLogger //sql日志
+	logsErr                            *logs.BeeLogger //err日志
 )
 
 type selfLog struct {
@@ -35,16 +34,16 @@ func init() {
 	reqLog()
 	sqlLog()
 	errLog()
-	socketLog()
 }
 
 //请求日志
 func reqLog() {
 	LogsReq = logs.NewLogger()
-	filePath, _ = getLogFilePullPath("req", "req")
+	filePath, _ = getLogFilePullPath("http", "http")
 
 	logConf := LogConfT{
 		Filename: filePath,
+		MaxSize:  5 * mb,
 		Maxdays:  3,
 		Level:    6,
 	}
@@ -60,6 +59,7 @@ func sqlLog() {
 
 	logConfSql := LogConfT{
 		Filename: filePathSql,
+		MaxSize:  5 * mb,
 		Maxdays:  3,
 		Level:    6,
 	}
@@ -68,27 +68,13 @@ func sqlLog() {
 	LogsSql.Async()
 }
 
-//socket日志
-func socketLog() {
-	LogsWs = logs.NewLogger()
-	filePathWs, _ = getLogFilePullPath("socket", "socket")
-
-	logConfWs := LogConfT{
-		Filename: filePathWs,
-		Maxdays:  3,
-		Level:    6,
-	}
-	bWs, _ := json.Marshal(logConfWs)
-	LogsWs.SetLogger(logs.AdapterFile, string(bWs))
-	LogsWs.Async()
-}
-
 //err日志
 func errLog() {
 	logsErr = logs.NewLogger()
 	filePathErr, _ = getLogFilePullPath("err", "err")
 	logConfErr := LogConfT{
 		Filename: filePathErr,
+		MaxSize:  5 * mb,
 		Maxdays:  3,
 		Level:    6,
 	}
@@ -96,13 +82,14 @@ func errLog() {
 	bErr, _ := json.Marshal(logConfErr)
 	//logsErr.EnableFuncCallDepth(true) //每行的位置
 	logsErr.SetLogger(logs.AdapterFile, string(bErr))
-	if conf.RunMode == gin.DebugMode {
+	if s.RunMode == gin.DebugMode {
 		logConfErrConsole := LogConfT{
 			Level: 7,
 		}
 		bErrC, _ := json.Marshal(logConfErrConsole)
 		logsErr.SetLogger(logs.AdapterConsole, string(bErrC))
 	}
+	logsErr.Async()
 }
 
 /**
@@ -124,7 +111,9 @@ func NewSelfLog(logPathName, logFileName string) *selfLog {
 
 	logConf := LogConfT{
 		Filename: filePathSql,
+		MaxSize:  5*mb,
 		Maxdays:  3,
+		Level:    6,
 	}
 	b, _ := json.Marshal(logConf)
 	newLogs.EnableFuncCallDepth(true) //每行的位置
@@ -144,12 +133,4 @@ func SysErr(err error) error {
 	fileLine := fmt.Sprintf("%s:%d", file, line)
 	logsErr.Error("%v\n%s", err, fileLine)
 	return err
-}
-
-//请求验证异常抛出
-func ValidErr(errs []*validation.Error) error {
-	for _, err := range errs {
-		return fmt.Errorf("%s%s", err.Key, err.Message)
-	}
-	return nil
 }

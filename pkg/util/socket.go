@@ -208,5 +208,5 @@ func (this *Ws) logReqData(reply []byte) {
 	logStr += fmt.Sprintf("\nBid:%s\n", bid)
 	logStr += fmt.Sprintf("%s\n", string(reply))
 	logStr += fmt.Sprintf("%s", "------------------------------------")
-	logs.LogsWs.Info("%s", logStr)
+	//logs.LogsWs.Info("%s", logStr)
 }

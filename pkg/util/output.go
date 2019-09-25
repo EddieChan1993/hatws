@@ -1,4 +1,4 @@
-package e
+package util
 
 import (
 	"github.com/gin-gonic/gin"
@@ -6,30 +6,30 @@ import (
 )
 
 const (
-	NO_ERROR  = 0
-	HAS_ERROR = 1
+	NoneError = 0
+	HasError  = 1
 )
 
 func resSuccess(data interface{}) map[string]interface{} {
 	return gin.H{
-		"code":  http.StatusOK,
-		"error": NO_ERROR,
+		"code":     http.StatusOK,
+		"error": NoneError,
 		"data":  data,
 	}
 }
 
 func resWarning(data interface{}) map[string]interface{} {
 	return gin.H{
-		"code":  http.StatusOK,
-		"error": HAS_ERROR,
+		"code":     http.StatusOK,
+		"error": HasError,
 		"data":  data,
 	}
 }
 
 func resOutput(code int, data interface{}) map[string]interface{} {
 	return gin.H{
-		"code":  code,
-		"error": HAS_ERROR,
+		"code":     code,
+		"error": HasError,
 		"data":  data,
 	}
 }

@@ -1,19 +1,16 @@
-package weixin
+package wx
 
 import (
-	"fmt"
 	"crypto/md5"
-	"strings"
 	"encoding/hex"
-	"sort"
-	"time"
 	"encoding/xml"
-	"net/http"
-	"io/ioutil"
-	"bytes"
-	"foleng/pkg/util"
-	"foleng/pkg/logs"
+	"hatgo/pkg/logs"
+	"hatgo/pkg/util"
+	"fmt"
+	"sort"
 	"strconv"
+	"strings"
+	"time"
 )
 
 const SUCCESS = "SUCCESS"
@@ -80,7 +77,7 @@ func unifiedOrder(openId, appid, tradeType string, orderGoods *WxOrderGoods) (*R
 	data.Appid = appid
 	data.MchId = mchId
 	data.Openid = openId
-	data.NonceStr = nonceStr()
+	data.NonceStr = util.NonceStr()
 	data.TradeType = tradeType
 	data.Body = orderGoods.Body
 	data.NotifyUrl = orderGoods.NotifyUrl
@@ -100,7 +97,7 @@ func unifiedOrder(openId, appid, tradeType string, orderGoods *WxOrderGoods) (*R
 	m["total_fee"] = data.TotalFee
 	m["out_trade_no"] = data.OutTradeNo
 	m["nonce_str"] = data.NonceStr
-	data.Sign = wxpayCalcSign(m, wxPayApiKey) //这个是计算wxpay签名的函数上面已贴出
+	data.Sign = wxPayCalcSign(m, wxPayApiKey) //这个是计算wxpay签名的函数上面已贴出
 
 	bytesReq, err := xml.Marshal(data)
 	if err != nil {
@@ -113,20 +110,7 @@ func unifiedOrder(openId, appid, tradeType string, orderGoods *WxOrderGoods) (*R
 
 	//发送unified order请求.统一下单接口
 	url := "https://api.mch.weixin.qq.com/pay/unifiedorder"
-	req, err := http.NewRequest("POST", url, bytes.NewReader(bytesReq))
-	if err != nil {
-		return nil, logs.SysErr(err)
-	}
-	req.Header.Set("Accept", "application/xml")
-	req.Header.Set("Content-Status", "application/xml;charset=utf-8")
-
-	c := http.Client{}
-	resp, err := c.Do(req)
-	defer resp.Body.Close()
-	if err != nil {
-		return nil, logs.SysErr(err)
-	}
-	body, err := ioutil.ReadAll(resp.Body)
+	body,err:=util.PostCurl(url,bytesReq,util.XMLHeader)
 	if err != nil {
 		return nil, logs.SysErr(err)
 	}
@@ -150,7 +134,7 @@ func unifiedOrder(openId, appid, tradeType string, orderGoods *WxOrderGoods) (*R
 		resMap["package"] = "prepay_id=" + respData.PrepayId
 		resMap["signType"] = "MD5"
 		resMap["timeStamp"] = strconv.FormatInt(time.Now().Unix(), 10)
-		resPayData.PaySign = wxpayCalcSign(resMap, wxPayApiKey) //签名
+		resPayData.PaySign = wxPayCalcSign(resMap, wxPayApiKey) //签名
 		return resPayData, nil
 	} else {
 		return nil, logs.SysErr(fmt.Errorf(respData.ReturnMsg))
@@ -158,7 +142,7 @@ func unifiedOrder(openId, appid, tradeType string, orderGoods *WxOrderGoods) (*R
 }
 
 //wxpay计算签名的函数
-func wxpayCalcSign(mReq map[string]interface{}, key string) (sign string) {
+func wxPayCalcSign(mReq map[string]interface{}, key string) (sign string) {
 	//STEP 1, 对key进行升序排序.
 	sortedKeys := make([]string, 0)
 	for k := range mReq {
@@ -187,9 +171,4 @@ func wxpayCalcSign(mReq map[string]interface{}, key string) (sign string) {
 	cipherStr := md5Ctx.Sum(nil)
 	upperSign := strings.ToUpper(hex.EncodeToString(cipherStr))
 	return upperSign
-}
-
-//随机字符串
-func nonceStr() string {
-	return fmt.Sprintf("%s%d", time.Now().Format("20060102150405"), util.RandInt(0000, 9999))
 }

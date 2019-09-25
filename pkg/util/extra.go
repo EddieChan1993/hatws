@@ -10,14 +10,11 @@ import (
 	"math/rand"
 )
 
-//获取Ip地址
-func GetIp(c *gin.Context) string {
-	//ip :=c.request.RemoteAddr
-	//return fmt.Sprintf(ip[0:strings.LastIndex(ip,":")])
+//jssdk相关的准备工作
+var (
+	chars = []byte("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+)
 
-	//X-Real_IP是根据nginx的配置的header来的，用于获取客户端的真实信息
-	return c.ClientIP()
-}
 
 //md5加密
 func Md5(value string) string {
@@ -58,24 +55,22 @@ func RandInt(start, end int) int {
 	return start + rand.Intn(ca)
 }
 
-//获取float64的随机数
-func RandFloat64(start, end float64) float64 {
-	timens := int64(time.Now().Nanosecond())
-	rand.Seed(timens)
-	ca := end - start
-	return rand.Float64()*ca + start
-}
-
-//获取float32的随机数
-func RandFloat32(start, end float32) float32 {
-	timens := int64(time.Now().Nanosecond())
-	rand.Seed(timens)
-	ca := end - start
-	return rand.Float32()*ca + start
-}
-
-
 //订单号
 func TradeNo(key string) string {
 	return fmt.Sprintf("%s%d%d", key, time.Now().UnixNano(), RandInt(1000, 9999)) //订单单号
+}
+
+
+////随机字符串
+//func nonceStr() string {
+//	return fmt.Sprintf("%s%d", time.Now().Format("20060102150405"), util.RandInt(0000, 9999))
+//}
+
+//随机字符串
+func NonceStr() string {
+	bs := []byte{}
+	for i := 0; i < 16; i++ {
+		bs = append(bs, chars[rand.Intn(len(chars))])
+	}
+	return string(bs)
 }

@@ -1,11 +1,11 @@
 package service
 
 import (
-	"github.com/gin-gonic/gin"
-	"hatgo/pkg/logs"
 	"fmt"
 	"github.com/astaxie/beego/validation"
-	"hatgo/ext"
+	"github.com/gin-gonic/gin"
+	"hatgo/pkg/logs"
+	"hatgo/pkg/plugin"
 )
 
 type ReqTest struct {
@@ -50,24 +50,24 @@ func SAddTest(c *gin.Context) error {
 	v.Mobile(req.Mobile, "")
 	v.IP(req.IP, "")
 	if v.HasErrors() {
-		return logs.ValidErr(v.Errors)
+		return plugin.ValidErr(v.Errors)
 	}
 	return nil
 }
 
 //表单提交
-func SUpload(c *gin.Context) (path string, err error) {
-	file, err := c.FormFile("file")
-	if err != nil {
-		return "", logs.SysErr(err)
-	}
-	pathName := "avatar"
-	path, err = ext.QiniuUpload(file, pathName)
-	if err != nil {
-		return "", err
-	}
-	return path, nil
-}
+//func SUpload(c *gin.Context) (path string, err error) {
+//	file, err := c.FormFile("file")
+//	if err != nil {
+//		return "", logs.SysErr(err)
+//	}
+//	pathName := "avatar"
+//	path, err = ext.QiniuUpload(file, pathName)
+//	if err != nil {
+//		return "", err
+//	}
+//	return path, nil
+//}
 
 func GetXml(c *gin.Context)  {
 	req:=new(XmlData)

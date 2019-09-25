@@ -1,6 +1,7 @@
 package main_test
 
 import (
+	"hatgo/pkg/s"
 	"testing"
 	"log"
 	"syscall"
@@ -20,7 +21,6 @@ func testEndLess(T *testing.T) {
 		link.Rd.Close()
 		logs.LogsReq.Close()
 		logs.LogsSql.Close()
-		logs.LogsWs.Close()
 	}()
 
 	endless.DefaultReadTimeOut = conf.Serverer.ReadTimeout
@@ -28,7 +28,7 @@ func testEndLess(T *testing.T) {
 	endless.DefaultMaxHeaderBytes = 1 << 20
 
 	log.Printf("%s %s",keyVer,_version_)
-	server := endless.NewServer(fmt.Sprintf("%s%s", conf.Serverer.HTTPAdd, conf.Serverer.HTTPPort), router.InitRouter())
+	server := endless.NewServer(fmt.Sprintf("%s%s", s.Service.HTTPAdd, s.Service.HTTPPort), router.InitRouter())
 	server.BeforeBegin = func(add string) {
 		log.Printf("HOST is %s", conf.Serverer.HTTPAdd)
 		log.Printf("Listening port %s", conf.Serverer.HTTPPort)
@@ -47,12 +47,11 @@ func testNoEndless(T testing.T) {
 		link.Rd.Close()
 		logs.LogsReq.Close()
 		logs.LogsSql.Close()
-		logs.LogsWs.Close()
 	}()
 
-	router := router.InitRouter()
-	log.Printf("%s %s",keyVer,_version_)
-	err := router.Run(fmt.Sprintf("%s%s", conf.Serverer.HTTPAdd, conf.Serverer.HTTPPort))
+	r := router.InitRouter()
+	log.Printf("%s%s",keyVer,_version_)
+	err := r.Run(fmt.Sprintf("%s:%s", conf.Service.HTTPAdd, conf.Service.HTTPPort))
 	if err != nil {
 		log.Fatalf("[server stop]%v", err)
 	}

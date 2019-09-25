@@ -2,7 +2,7 @@ package service
 
 import (
 	"github.com/gin-gonic/gin"
-	"hatgo/pkg/e"
+	"hatgo/pkg/lang"
 	"hatgo/pkg/util"
 )
 
@@ -24,7 +24,7 @@ func channel(wss *util.Ws, token string) {
 		switch reqMsg.Type {
 		case "connect":
 			wss.BindCoon(token)
-			wss.SendSelf(e.GetMsg(e.CONNECT_OK),e.CONNECT_OK)
+			wss.SendSelf(lang.CONNECT_OK,lang.CONNECT_OK)
 		default:
 			wss.SendSelf("未知操作","none")
 		}
