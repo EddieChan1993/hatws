@@ -1,37 +1,38 @@
 package main_test
 
 import (
+	"fmt"
+	"github.com/fvbock/endless"
+	"hatgo/app/router"
+	"hatgo/pkg/plugin"
 	"hatgo/pkg/s"
-	"testing"
+	"hatgo/pkg/logs"
 	"log"
 	"syscall"
-	"github.com/fvbock/endless"
-	"hatgo/pkg/logs"
-	"hatgo/pkg/conf"
-	"hatgo/app/router"
-	"hatgo/pkg/link"
-	"fmt"
+	"testing"
 )
+
 const keyVer = "[version]"
+
 var _version_ = "none setting"
 
 func testEndLess(T *testing.T) {
 	defer func() {
-		link.Db.Close()
-		link.Rd.Close()
+		plugin.Db.Close()
+		plugin.Rd.Close()
 		logs.LogsReq.Close()
 		logs.LogsSql.Close()
 	}()
 
-	endless.DefaultReadTimeOut = conf.Serverer.ReadTimeout
-	endless.DefaultWriteTimeOut = conf.Serverer.WriteTimeout
+	endless.DefaultReadTimeOut = s.Service.ReadTimeout
+	endless.DefaultWriteTimeOut = s.Service.WriteTimeout
 	endless.DefaultMaxHeaderBytes = 1 << 20
 
-	log.Printf("%s %s",keyVer,_version_)
-	server := endless.NewServer(fmt.Sprintf("%s%s", s.Service.HTTPAdd, s.Service.HTTPPort), router.InitRouter())
+	log.Printf("%s %s", keyVer, _version_)
+	server := endless.NewServer(fmt.Sprintf("%s:%s", s.Service.HTTPAdd, s.Service.HTTPPort), router.InitRouter())
 	server.BeforeBegin = func(add string) {
-		log.Printf("HOST is %s", conf.Serverer.HTTPAdd)
-		log.Printf("Listening port %s", conf.Serverer.HTTPPort)
+		log.Printf("HOST is %s", s.Service.HTTPAdd)
+		log.Printf("Listening port is %s", s.Service.HTTPPort)
 		log.Printf("Actual pid is %d", syscall.Getpid())
 	}
 	err := server.ListenAndServe()
@@ -43,15 +44,15 @@ func testEndLess(T *testing.T) {
 
 func testNoEndless(T testing.T) {
 	defer func() {
-		link.Db.Close()
-		link.Rd.Close()
+		plugin.Db.Close()
+		plugin.Rd.Close()
 		logs.LogsReq.Close()
 		logs.LogsSql.Close()
 	}()
 
-	r := router.InitRouter()
-	log.Printf("%s%s",keyVer,_version_)
-	err := r.Run(fmt.Sprintf("%s:%s", conf.Service.HTTPAdd, conf.Service.HTTPPort))
+	r := router.InitRouterr()
+	log.Printf("%s %s", keyVer, _version_)
+	err := r.Run(fmt.Sprintf("%s:%s", s.Service.HTTPAdd, s.Service.HTTPPort))
 	if err != nil {
 		log.Fatalf("[server stop]%v", err)
 	}
